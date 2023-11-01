@@ -1,0 +1,30 @@
+From 18a82693d550f4d19c4310741dc60cfef605079a Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 09:01:18 +0200
+Subject: [PATCH 01/17] Add gnu_printf format attribute to yelp_debug
+
+yelp-3.28.1/libyelp/yelp-debug.c:150:3: warning: function 'yelp_debug' might be
+a candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
+---
+ libyelp/yelp-debug.h | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/libyelp/yelp-debug.h b/libyelp/yelp-debug.h
+index 620a4bf1..18c5582e 100644
+--- a/libyelp/yelp-debug.h
++++ b/libyelp/yelp-debug.h
+@@ -67,8 +67,9 @@ typedef enum {
+ #endif
+ 
+ G_GNUC_INTERNAL
+-void yelp_debug (const gchar *file, guint line, 
+-                 const gchar *function, guint flags, const gchar *format, ...);
++void yelp_debug (const gchar *file, guint line,
++                 const gchar *function, guint flags,
++		 const gchar *format, ...) __attribute__ ((format (gnu_printf, 5, 6)));
+ 
+ G_END_DECLS
+ 
+-- 
+2.19.1
+

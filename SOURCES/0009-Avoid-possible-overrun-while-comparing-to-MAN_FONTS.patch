@@ -1,0 +1,40 @@
+From b1d8fce69f59581769e5db87e7e20cdc3c27d685 Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 11:30:54 +0200
+Subject: [PATCH 09/17] Avoid possible overrun while comparing to MAN_FONTS
+
+yelp-3.28.1/libyelp/yelp-man-parser.c:464: cond_at_most: Checking "k > 8U" implies that "k" may be up to 8 on the false branch.
+yelp-3.28.1/libyelp/yelp-man-parser.c:469: overrun-local: Overrunning array "parser->font_registers" of 8 8-byte elements at element index 8 (byte offset 64) using index "k" (which evaluates to 8).
+
+yelp-3.28.1/libyelp/yelp-man-parser.c:476: assignment: Assigning: "k" = "parser->current_font".
+yelp-3.28.1/libyelp/yelp-man-parser.c:477: cond_at_most: Checking "k > 8U" implies that "k" and "parser->current_font" may be up to 8 on the false branch.
+yelp-3.28.1/libyelp/yelp-man-parser.c:477: overrun-local: Overrunning array "parser->font_registers" of 8 8-byte elements at element index 8 (byte offset 64) using index "k" (which evaluates to 8).
+---
+ libyelp/yelp-man-parser.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libyelp/yelp-man-parser.c b/libyelp/yelp-man-parser.c
+index 8d097820..00e66e00 100644
+--- a/libyelp/yelp-man-parser.c
++++ b/libyelp/yelp-man-parser.c
+@@ -463,7 +463,7 @@ yelp_man_parser_free (YelpManParser *parser)
+ static void
+ set_font_register (YelpManParser *parser, guint k, const gchar* name)
+ {
+-    if (k > MAN_FONTS) {
++    if (k >= MAN_FONTS) {
+         g_warning ("Tried to set nonexistant font register %u to %s",
+                    k, name);
+         return;
+@@ -476,7 +476,7 @@ static const gchar*
+ get_font (const YelpManParser *parser)
+ {
+     guint k = parser->current_font;
+-    if (k > MAN_FONTS ||
++    if (k >= MAN_FONTS ||
+         parser->font_registers[k] == NULL) {
+ 
+         g_warning ("Tried to get nonexistant font register %u", k);
+-- 
+2.19.1
+

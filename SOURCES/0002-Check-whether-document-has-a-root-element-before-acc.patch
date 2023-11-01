@@ -1,0 +1,63 @@
+From 3b4245db2e954675d15f50a0e9d004e62a43a48c Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 09:50:53 +0200
+Subject: [PATCH 02/17] Check whether document has a root element before
+ accessing it.
+
+yelp-3.28.1/libyelp/yelp-docbook-document.c:562:13: note: Access to field 'ns' results in a dereference of a null pointer (loaded from field 'xmlcur')
+        if (priv->xmlcur->ns) {
+            ^     ~~~~~~
+  560|            * unique value, and insert it into the in-memory tree */
+  561|           g_snprintf (autoidstr, 20, "//autoid-%d", ++autoid);
+  562|->         if (priv->xmlcur->ns) {
+  563|               xmlNewNsProp (priv->xmlcur,
+  564|                             xmlNewNs (priv->xmlcur, XML_XML_NAMESPACE, BAD_CAST "xml"),
+
+yelp-3.28.1/libyelp/yelp-docbook-document.c:608:16: note: Access to field 'children' results in a dereference of a null pointer (loaded from field 'xmlcur')
+    for (cur = priv->xmlcur->children; cur; cur = cur->next) {
+               ^     ~~~~~~
+  606|                                 NULL);
+  607|
+  608|->     for (cur = priv->xmlcur->children; cur; cur = cur->next) {
+  609|           if (cur->type == XML_ELEMENT_NODE) {
+  610|               priv->xmlcur = cur;
+---
+ libyelp/yelp-docbook-document.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/libyelp/yelp-docbook-document.c b/libyelp/yelp-docbook-document.c
+index 6ecaf316..24746248 100644
+--- a/libyelp/yelp-docbook-document.c
++++ b/libyelp/yelp-docbook-document.c
+@@ -309,6 +309,7 @@ docbook_process (YelpDocbookDocument *docbook)
+     GFile *file = NULL;
+     gchar *filepath = NULL;
+     xmlDocPtr xmldoc = NULL;
++    xmlNodePtr xmlcur = NULL;
+     xmlChar *id = NULL;
+     xmlParserCtxtPtr parserCtxt = NULL;
+     GError *error;
+@@ -343,7 +344,10 @@ docbook_process (YelpDocbookDocument *docbook)
+                               XML_PARSE_DTDLOAD | XML_PARSE_NOCDATA |
+                               XML_PARSE_NOENT   | XML_PARSE_NONET   );
+ 
+-    if (xmldoc == NULL) {
++    if (xmldoc)
++        xmlcur = xmlDocGetRootElement (xmldoc);
++
++    if (xmldoc == NULL || xmlcur == NULL) {
+         error = g_error_new (YELP_ERROR, YELP_ERROR_PROCESSING,
+                              _("The file ‘%s’ could not be parsed because it is"
+                                " not a well-formed XML document."),
+@@ -374,7 +378,7 @@ docbook_process (YelpDocbookDocument *docbook)
+         priv->max_depth = 1;
+ 
+     priv->xmldoc = xmldoc;
+-    priv->xmlcur = xmlDocGetRootElement (xmldoc);
++    priv->xmlcur = xmlcur;
+ 
+     id = xmlGetProp (priv->xmlcur, BAD_CAST "id");
+     if (!id)
+-- 
+2.19.1
+

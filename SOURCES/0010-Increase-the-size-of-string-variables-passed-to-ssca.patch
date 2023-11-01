@@ -1,0 +1,37 @@
+From 526febe57f9c05e3ca8a08e4016c5b36b8195406 Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 11:43:51 +0200
+Subject: [PATCH 10/17] Increase the size of string variables passed to sscanf
+
+yelp-3.28.1/libyelp/yelp-man-parser.c:549: error[invalidScanfFormatWidth]: Width 10 given in format string (no. 2) is larger than destination buffer 'name[10]', use %9s to prevent overflowing it.
+
+yelp-3.28.1/libyelp/yelp-man-parser.c:926: error[invalidScanfFormatWidth]: Width 16 given in format string (no. 1) is larger than destination buffer 'name[16]', use %15s to prevent overflowing it.
+---
+ libyelp/yelp-man-parser.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libyelp/yelp-man-parser.c b/libyelp/yelp-man-parser.c
+index 00e66e00..f8eb69f6 100644
+--- a/libyelp/yelp-man-parser.c
++++ b/libyelp/yelp-man-parser.c
+@@ -545,7 +545,7 @@ parse_prologue_line (YelpManParser *parser, GError **error)
+ static gboolean
+ parse_xf (YelpManParser *parser, GError **error)
+ {
+-    gchar name[10];
++    gchar name[11];
+     guint k;
+ 
+     if (SSCANF ("x f%*s %u %10s", 2, &k, name)) {
+@@ -920,7 +920,7 @@ append_nbsps (YelpManParser *parser, guint k)
+ static gboolean
+ parse_C (YelpManParser *parser, GError **error)
+ {
+-    gchar name[16];
++    gchar name[17];
+     gunichar code = 0;
+     guint k;
+     gint len;
+-- 
+2.19.1
+

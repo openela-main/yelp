@@ -1,0 +1,134 @@
+From 3ce3334e9f64eb9eb9f6f52608ca00c2fb74b516 Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 10:30:35 +0200
+Subject: [PATCH 04/17] Correctly check whether virtual method is implemented
+ before calling it
+
+yelp-3.28.1/libyelp/yelp-document.c:819:27: warning: Access to field 'request_page' results in a dereference of a null pointer (loaded from field 'g_class')
+    g_return_val_if_fail (YELP_DOCUMENT_GET_CLASS (document)->request_page != NULL, FALSE);
+
+yelp-3.28.1/libyelp/yelp-document.c:943:27: warning: Access to field 'read_contents' results in a dereference of a null pointer (loaded from field 'g_class')
+    g_return_val_if_fail (YELP_DOCUMENT_GET_CLASS (document)->read_contents != NULL, NULL);
+
+yelp-3.28.1/libyelp/yelp-document.c:1100:23: warning: Access to field 'finish_read' results in a dereference of a null pointer (loaded from field 'g_class')
+    g_return_if_fail (YELP_DOCUMENT_GET_CLASS (document)->finish_read != NULL);
+
+yelp-3.28.1/libyelp/yelp-document.c:1141:27: warning: Access to field 'get_mime_type' results in a dereference of a null pointer (loaded from field 'g_class')
+    g_return_val_if_fail (YELP_DOCUMENT_GET_CLASS (document)->get_mime_type != NULL, NULL);
+
+yelp-3.28.1/libyelp/yelp-document.c:1173:23: warning: Access to field 'index' results in a dereference of a null pointer (loaded from field 'g_class')
+    g_return_if_fail (YELP_DOCUMENT_GET_CLASS (document)->index != NULL);
+---
+ libyelp/yelp-document.c | 56 ++++++++++++++++++++++++++++++-----------
+ 1 file changed, 41 insertions(+), 15 deletions(-)
+
+diff --git a/libyelp/yelp-document.c b/libyelp/yelp-document.c
+index c1eec9cc..d832d1ed 100644
+--- a/libyelp/yelp-document.c
++++ b/libyelp/yelp-document.c
+@@ -815,17 +815,19 @@ yelp_document_request_page (YelpDocument         *document,
+ 			    gpointer              user_data,
+ 			    GDestroyNotify        notify)
+ {
++    YelpDocumentClass *klass;
++
++    g_return_val_if_fail (document != NULL, FALSE);
+     g_return_val_if_fail (YELP_IS_DOCUMENT (document), FALSE);
+-    g_return_val_if_fail (YELP_DOCUMENT_GET_CLASS (document)->request_page != NULL, FALSE);
++
++    klass = YELP_DOCUMENT_GET_CLASS (document);
++    g_return_val_if_fail (klass != NULL, FALSE);
++    g_return_val_if_fail (klass->request_page != NULL, FALSE);
+ 
+     debug_print (DB_FUNCTION, "entering\n");
+ 
+-    return YELP_DOCUMENT_GET_CLASS (document)->request_page (document,
+-							     page_id,
+-							     cancellable,
+-							     callback,
+-							     user_data,
+-							     notify);
++    return klass->request_page (document, page_id, cancellable, callback,
++                                user_data, notify);
+ }
+ 
+ static gboolean
+@@ -939,10 +941,16 @@ const gchar *
+ yelp_document_read_contents (YelpDocument *document,
+ 			     const gchar  *page_id)
+ {
++    YelpDocumentClass *klass;
++
++    g_return_val_if_fail (document != NULL, NULL);
+     g_return_val_if_fail (YELP_IS_DOCUMENT (document), NULL);
+-    g_return_val_if_fail (YELP_DOCUMENT_GET_CLASS (document)->read_contents != NULL, NULL);
+ 
+-    return YELP_DOCUMENT_GET_CLASS (document)->read_contents (document, page_id);
++    klass = YELP_DOCUMENT_GET_CLASS (document);
++    g_return_val_if_fail (klass != NULL, FALSE);
++    g_return_val_if_fail (klass->read_contents != NULL, FALSE);
++
++    return klass->read_contents (document, page_id);
+ }
+ 
+ static const gchar *
+@@ -1096,10 +1104,16 @@ void
+ yelp_document_finish_read (YelpDocument *document,
+ 			   const gchar  *contents)
+ {
++    YelpDocumentClass *klass;
++
++    g_return_if_fail (document != NULL);
+     g_return_if_fail (YELP_IS_DOCUMENT (document));
+-    g_return_if_fail (YELP_DOCUMENT_GET_CLASS (document)->finish_read != NULL);
+ 
+-    YELP_DOCUMENT_GET_CLASS (document)->finish_read (document, contents);
++    klass = YELP_DOCUMENT_GET_CLASS (document);
++    g_return_if_fail (klass != NULL);
++    g_return_if_fail (klass->finish_read != NULL);
++
++    klass->finish_read (document, contents);
+ }
+ 
+ static void
+@@ -1137,10 +1151,16 @@ gchar *
+ yelp_document_get_mime_type (YelpDocument *document,
+ 			     const gchar  *page_id)
+ {
++    YelpDocumentClass *klass;
++
++    g_return_val_if_fail (document != NULL, NULL);
+     g_return_val_if_fail (YELP_IS_DOCUMENT (document), NULL);
+-    g_return_val_if_fail (YELP_DOCUMENT_GET_CLASS (document)->get_mime_type != NULL, NULL);
+ 
+-    return YELP_DOCUMENT_GET_CLASS (document)->get_mime_type (document, page_id);
++    klass = YELP_DOCUMENT_GET_CLASS (document);
++    g_return_val_if_fail (klass != NULL, NULL);
++    g_return_val_if_fail (klass->get_mime_type != NULL, FALSE);
++
++    return klass->get_mime_type (document, page_id);
+ }
+ 
+ static gchar *
+@@ -1169,10 +1189,16 @@ document_get_mime_type (YelpDocument *document,
+ void
+ yelp_document_index (YelpDocument *document)
+ {
++    YelpDocumentClass *klass;
++
++    g_return_if_fail (document != NULL);
+     g_return_if_fail (YELP_IS_DOCUMENT (document));
+-    g_return_if_fail (YELP_DOCUMENT_GET_CLASS (document)->index != NULL);
+ 
+-    YELP_DOCUMENT_GET_CLASS (document)->index (document);
++    klass = YELP_DOCUMENT_GET_CLASS (document);
++    g_return_if_fail (klass != NULL);
++    g_return_if_fail (klass->index != NULL);
++
++    klass->index (document);
+ }
+ 
+ static void
+-- 
+2.19.1
+

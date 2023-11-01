@@ -1,0 +1,29 @@
+From 79e59e9d374e635ca65b4d24c59fffacc5425b1a Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 11:04:35 +0200
+Subject: [PATCH 07/17] Check whether the index variable is valid before
+ dereferencing it
+
+yelp-3.28.1/libyelp/yelp-mallard-document.c:1002: deref_ptr: Directly dereferencing pointer "index".
+yelp-3.28.1/libyelp/yelp-mallard-document.c:1073: check_after_deref: Null-checking "index" suggests that it may be null, but it has already been dereferenced on all paths leading to the check.
+---
+ libyelp/yelp-mallard-document.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/libyelp/yelp-mallard-document.c b/libyelp/yelp-mallard-document.c
+index 74fc80ee..9c006efc 100644
+--- a/libyelp/yelp-mallard-document.c
++++ b/libyelp/yelp-mallard-document.c
+@@ -1070,8 +1070,7 @@ mallard_index_threaded (YelpMallardDocument *mallard)
+                 xmlXPathFreeContext (xpath);
+             if (index->doc != NULL)
+                 xmlFreeDoc (index->doc);
+-            if (index != NULL)
+-                g_free (index);
++            g_free (index);
+             if (parserCtxt != NULL)
+                 xmlFreeParserCtxt (parserCtxt);
+             g_object_unref (pagefile);
+-- 
+2.19.1
+

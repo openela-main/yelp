@@ -1,0 +1,32 @@
+From 3fe0efe361ca9fb697f82d67e0bd9036970f9884 Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 11:53:13 +0200
+Subject: [PATCH 12/17] Swap the if() checks to avoid possible null pointer
+ dereference
+
+yelp-3.28.1/libyelp/yelp-transform.c:501: deref_ptr: Directly dereferencing pointer "ctxt".
+yelp-3.28.1/libyelp/yelp-transform.c:504: check_after_deref: Null-checking "ctxt" suggests that it may be null, but it has already been dereferenced on all paths leading to the check.
+---
+ libyelp/yelp-transform.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libyelp/yelp-transform.c b/libyelp/yelp-transform.c
+index 7a5dc86e..0a1c8058 100644
+--- a/libyelp/yelp-transform.c
++++ b/libyelp/yelp-transform.c
+@@ -498,10 +498,10 @@ xslt_yelp_document (xsltTransformContextPtr ctxt,
+ 
+     debug_print (DB_FUNCTION, "entering\n");
+ 
+-    if (ctxt->state == XSLT_STATE_STOPPED)
++    if (!ctxt || !node || !inst || !comp)
+         return;
+ 
+-    if (!ctxt || !node || !inst || !comp)
++    if (ctxt->state == XSLT_STATE_STOPPED)
+         return;
+ 
+     transform = YELP_TRANSFORM (ctxt->_private);
+-- 
+2.19.1
+

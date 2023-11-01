@@ -1,0 +1,32 @@
+From a49c3d4b94dbfabefe81d2c6d903c53c252bf78a Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Fri, 12 Oct 2018 11:04:31 +0200
+Subject: [PATCH 15/17] Remove unused variable
+
+4. yelp-3.28.1/libyelp/yelp-info-parser.c:959:2: note: Value stored to 'pages' is never read
+         pages = 0;
+         ^       ~
+   957|             (GDestroyNotify) gtk_tree_iter_free);
+   958|
+   959|->  pages = 0;
+   960|    for (ptr = page_list; *ptr != NULL; ptr++)
+   961|    {
+---
+ libyelp/yelp-info-parser.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/libyelp/yelp-info-parser.c b/libyelp/yelp-info-parser.c
+index ed16e373..7b718ea0 100644
+--- a/libyelp/yelp-info-parser.c
++++ b/libyelp/yelp-info-parser.c
+@@ -956,7 +956,6 @@ GtkTreeStore
+ 	nodes2iters = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+ 					     (GDestroyNotify) gtk_tree_iter_free);
+ 
+-	pages = 0;
+ 	for (ptr = page_list; *ptr != NULL; ptr++)
+ 	{
+ 	  if (page_type (*ptr) != PAGE_NODE) continue;
+-- 
+2.19.1
+

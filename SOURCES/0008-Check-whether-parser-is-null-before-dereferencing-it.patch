@@ -1,0 +1,35 @@
+From 33bf987013a6f7c875dc643a74e11beba4a12f03 Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 11:15:10 +0200
+Subject: [PATCH 08/17] Check whether parser is null before dereferencing it
+
+yelp-3.28.1/libyelp/yelp-man-parser.c:445: var_compare_op: Comparing "parser" to null implies that "parser" might be null.
+yelp-3.28.1/libyelp/yelp-man-parser.c:449: var_deref_op: Dereferencing null pointer "parser".
+---
+ libyelp/yelp-man-parser.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/libyelp/yelp-man-parser.c b/libyelp/yelp-man-parser.c
+index 46073a2e..8d097820 100644
+--- a/libyelp/yelp-man-parser.c
++++ b/libyelp/yelp-man-parser.c
+@@ -442,10 +442,12 @@ void
+ yelp_man_parser_free (YelpManParser *parser)
+ {
+     guint k;
+-    if (parser) {
+-        for (k=0; k<MAN_FONTS; k++)
+-            g_free (parser->font_registers[k]);
+-    }
++
++    if (parser == NULL)
++        return;
++
++    for (k=0; k<MAN_FONTS; k++)
++        g_free (parser->font_registers[k]);
+     g_string_free (parser->accumulator, TRUE);
+     g_free (parser->title_str);
+     g_free (parser->section);
+-- 
+2.19.1
+

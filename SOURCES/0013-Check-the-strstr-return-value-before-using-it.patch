@@ -1,0 +1,33 @@
+From e3e9e7961b721d2bdbf50ca81fdc869170289e28 Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 11:56:21 +0200
+Subject: [PATCH 13/17] Check the strstr() return value before using it
+
+yelp-3.28.1/libyelp/yelp-uri-builder.c:81: returned_null: "strstr" returns null (checked 10 out of 12 times).
+yelp-3.28.1/libyelp/yelp-uri-builder.c:81: var_assigned: Assigning: "resource" = null return value from "strstr".
+yelp-3.28.1/libyelp/yelp-uri-builder.c:82: dereference: Incrementing a pointer which might be null: "resource".
+---
+ libyelp/yelp-uri-builder.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/libyelp/yelp-uri-builder.c b/libyelp/yelp-uri-builder.c
+index bb34d202..58a53ac9 100644
+--- a/libyelp/yelp-uri-builder.c
++++ b/libyelp/yelp-uri-builder.c
+@@ -78,9 +78,10 @@ build_yelp_uri (const gchar *uri_str)
+   memmove (uri, uri + BOGUS_PREFIX_LEN, strlen (uri) - BOGUS_PREFIX_LEN + 1);
+ 
+   /* Remove the leading slash */
+-  resource = strstr (uri, ":");
+-  resource++;
+-  memmove (resource, resource + 1, strlen (resource));
++  if ((resource = strstr (uri, ":"))) {
++    resource++;
++    memmove (resource, resource + 1, strlen (resource));
++  }
+ 
+   /* Remove the trailing slash if any */
+   path_len = strlen (uri);
+-- 
+2.19.1
+
