@@ -1,0 +1,27 @@
+From c5abcf98fdbb437574f916b6b2c1fa2f3a89219f Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 11:45:36 +0200
+Subject: [PATCH 11/17] Initialize ws_start variable before returning it
+
+yelp-3.28.1/libyelp/yelp-man-parser.c:1194: var_decl: Declaring variable "ws_start" without initializer.
+yelp-3.28.1/libyelp/yelp-man-parser.c:1202: uninit_use: Using uninitialized value "ws_start".
+---
+ libyelp/yelp-man-parser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libyelp/yelp-man-parser.c b/libyelp/yelp-man-parser.c
+index f8eb69f6..302ccb31 100644
+--- a/libyelp/yelp-man-parser.c
++++ b/libyelp/yelp-man-parser.c
+@@ -1193,7 +1193,7 @@ static gchar *
+ find_contiguous_whitespace (gchar *text, guint ws_len)
+ {
+     guint counter = 0;
+-    gchar *ws_start;
++    gchar *ws_start = NULL;
+     while (*text) {
+         if (g_unichar_isspace (g_utf8_get_char (text))) {
+             if (!counter) ws_start = text;
+-- 
+2.19.1
+

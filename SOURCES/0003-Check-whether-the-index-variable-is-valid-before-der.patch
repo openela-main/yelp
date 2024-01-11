@@ -1,0 +1,44 @@
+From 05fd1b7d267d83ad73f67bb99aac5c9ba069d4e5 Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 10:09:43 +0200
+Subject: [PATCH 03/17] Check whether the index variable is valid before
+ dereferencing it
+
+yelp-3.28.1/libyelp/yelp-docbook-document.c:1058: check_after_deref: Null-checking "index" suggests that it may be null, but it has already been dereferenced on all paths leading to the check.
+yelp-3.28.1/libyelp/yelp-docbook-document.c:1026: deref_ptr: Directly dereferencing pointer "index".
+yelp-3.28.1/libyelp/yelp-docbook-document.c:1054: deref_ptr: Directly dereferencing pointer "index".
+ 1052|       if (filename != NULL)
+ 1053|           g_free (filename);
+ 1054|->     if (index->doc != NULL)
+ 1055|           xmlFreeDoc (index->doc);
+ 1056|       if (index->doc_uri != NULL)
+---
+ libyelp/yelp-docbook-document.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/libyelp/yelp-docbook-document.c b/libyelp/yelp-docbook-document.c
+index 24746248..afb49fb0 100644
+--- a/libyelp/yelp-docbook-document.c
++++ b/libyelp/yelp-docbook-document.c
+@@ -1055,12 +1055,13 @@ docbook_index_threaded (YelpDocbookDocument *docbook)
+         g_object_unref (file);
+     if (filename != NULL)
+         g_free (filename);
+-    if (index->doc != NULL)
+-        xmlFreeDoc (index->doc);
+-    if (index->doc_uri != NULL)
+-        g_free (index->doc_uri);
+-    if (index != NULL)
++    if (index != NULL) {
++        if (index->doc != NULL)
++            xmlFreeDoc (index->doc);
++        if (index->doc_uri != NULL)
++            g_free (index->doc_uri);
+         g_free (index);
++    }
+     if (parserCtxt != NULL)
+         xmlFreeParserCtxt (parserCtxt);
+ 
+-- 
+2.19.1
+

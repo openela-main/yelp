@@ -1,0 +1,27 @@
+From 16bcefc7eeca2443e79b85e5257f66ef5b50eaf0 Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Tue, 24 Jul 2018 12:45:42 +0200
+Subject: [PATCH 14/17] Check variable before dereferencing it
+
+yelp-3.28.1/libyelp/yelp-mallard-document.c:341: var_compare_op: Comparing "path" to null implies that "path" might be null.
+yelp-3.28.1/libyelp/yelp-mallard-document.c:346: var_deref_op: Dereferencing null pointer "path".
+---
+ libyelp/yelp-mallard-document.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libyelp/yelp-mallard-document.c b/libyelp/yelp-mallard-document.c
+index 9c006efc..b3319310 100644
+--- a/libyelp/yelp-mallard-document.c
++++ b/libyelp/yelp-mallard-document.c
+@@ -345,7 +345,7 @@ mallard_think (YelpMallardDocument *mallard)
+          */
+         error = g_error_new (YELP_ERROR, YELP_ERROR_NOT_FOUND,
+                              _("The directory ‘%s’ does not exist."),
+-                             path[0]);
++                             path && path[0] ? path[0] : "NULL");
+ 	yelp_document_error_pending ((YelpDocument *) mallard, error);
+         g_error_free (error);
+ 	goto done;
+-- 
+2.19.1
+

@@ -1,0 +1,32 @@
+From d7d1c089196e4e1bef314d6d6a01caffd6bba1da Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Mon, 23 Jul 2018 10:57:33 +0200
+Subject: [PATCH 06/17] Fix a use of an uninitialized variable
+
+yelp-3.28.1/libyelp/yelp-info-parser.c:1174: var_decl: Declaring variable "menu_node" without initializer.
+yelp-3.28.1/libyelp/yelp-info-parser.c:1310: uninit_use: Using uninitialized value "menu_node".
+ 1308|       else if (*(menuitems[i]) != '\0') {
+ 1309|         tmp = g_strconcat ("\n", first_non_space (menuitems[i]), NULL);
+ 1310|->       xmlNewTextChild (mholder ? mholder : menu_node,
+ 1311|                          NULL, BAD_CAST "para1",
+ 1312|   		       BAD_CAST tmp);
+---
+ libyelp/yelp-info-parser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libyelp/yelp-info-parser.c b/libyelp/yelp-info-parser.c
+index 0c383bfe..ed16e373 100644
+--- a/libyelp/yelp-info-parser.c
++++ b/libyelp/yelp-info-parser.c
+@@ -1171,7 +1171,7 @@ yelp_info_parse_menu (GtkTreeStore *tree, xmlNodePtr *node,
+   gchar **split;
+   gchar **menuitems;
+   gchar *tmp = NULL;
+-  xmlNodePtr newnode, menu_node, mholder = NULL;
++  xmlNodePtr newnode, menu_node = NULL, mholder = NULL;
+   int i=0;
+ 
+   split = g_strsplit (page_content, "* Menu:", 2);
+-- 
+2.19.1
+

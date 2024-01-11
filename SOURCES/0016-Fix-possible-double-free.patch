@@ -1,0 +1,225 @@
+From 7076be534597dadba5c3b3bcfdd10a93333fbc43 Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Fri, 12 Oct 2018 12:11:32 +0200
+Subject: [PATCH 16/17] Fix possible double free
+
+Error: CLANG_WARNING:
+yelp-3.28.1/libyelp/yelp-uri.c:931:5: warning: Attempt to free released memory
+    g_free (query);
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:259:9: note: Assuming the condition is false
+    if (priv->doctype != YELP_URI_DOCUMENT_TYPE_UNRESOLVED)
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:259:5: note: Taking false branch
+    if (priv->doctype != YELP_URI_DOCUMENT_TYPE_UNRESOLVED)
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:262:9: note: Assuming the condition is false
+    if (priv->res_base)
+        ^~~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:262:5: note: Taking false branch
+    if (priv->res_base)
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:266:5: note: Calling 'resolve_sync'
+    resolve_sync (uri);
+    ^~~~~~~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:311:9: note: Assuming the condition is false
+    if (g_str_has_prefix (priv->res_arg, "ghelp:")
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:311:9: note: Left side of '||' is false
+yelp-3.28.1/libyelp/yelp-uri.c:312:12: note: Assuming the condition is false
+        || g_str_has_prefix (priv->res_arg, "gnome-help:")) {
+           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:311:5: note: Taking false branch
+    if (g_str_has_prefix (priv->res_arg, "ghelp:")
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:315:14: note: Assuming the condition is true
+    else if (g_str_has_prefix (priv->res_arg, "help:")) {
+             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:315:10: note: Taking true branch
+    else if (g_str_has_prefix (priv->res_arg, "help:")) {
+         ^
+yelp-3.28.1/libyelp/yelp-uri.c:316:9: note: Calling 'resolve_help_uri'
+        resolve_help_uri (uri);
+        ^~~~~~~~~~~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:856:9: note: Assuming 'colon' is non-null
+    if (!colon) {
+        ^~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:856:5: note: Taking false branch
+    if (!colon) {
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:862:21: note: Assuming the condition is true
+    for (c = colon; *c != '\0'; c++) {
+                    ^~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:862:5: note: Loop condition is true.  Entering loop body
+    for (c = colon; *c != '\0'; c++) {
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:863:13: note: Assuming the condition is false
+        if (*c == '#' && hash == NULL)
+            ^~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:863:23: note: Left side of '&&' is false
+        if (*c == '#' && hash == NULL)
+                      ^
+yelp-3.28.1/libyelp/yelp-uri.c:865:18: note: Assuming the condition is false
+        else if (*c == '?' && query == NULL && hash == NULL)
+                 ^~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:865:28: note: Left side of '&&' is false
+        else if (*c == '?' && query == NULL && hash == NULL)
+                           ^
+yelp-3.28.1/libyelp/yelp-uri.c:867:18: note: Assuming the condition is false
+        else if (*c == '/' && slash == NULL && query == NULL && hash == NULL)
+                 ^~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:867:28: note: Left side of '&&' is false
+        else if (*c == '/' && slash == NULL && query == NULL && hash == NULL)
+                           ^
+yelp-3.28.1/libyelp/yelp-uri.c:862:21: note: Assuming the condition is true
+    for (c = colon; *c != '\0'; c++) {
+                    ^~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:862:5: note: Loop condition is true.  Entering loop body
+    for (c = colon; *c != '\0'; c++) {
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:863:13: note: Assuming the condition is false
+        if (*c == '#' && hash == NULL)
+            ^~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:863:23: note: Left side of '&&' is false
+        if (*c == '#' && hash == NULL)
+                      ^
+yelp-3.28.1/libyelp/yelp-uri.c:865:18: note: Assuming the condition is true
+        else if (*c == '?' && query == NULL && hash == NULL)
+                 ^~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:865:18: note: Left side of '&&' is true
+yelp-3.28.1/libyelp/yelp-uri.c:865:18: note: Left side of '&&' is true
+yelp-3.28.1/libyelp/yelp-uri.c:865:14: note: Taking true branch
+        else if (*c == '?' && query == NULL && hash == NULL)
+             ^
+yelp-3.28.1/libyelp/yelp-uri.c:862:21: note: Assuming the condition is true
+    for (c = colon; *c != '\0'; c++) {
+                    ^~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:862:5: note: Loop condition is true.  Entering loop body
+    for (c = colon; *c != '\0'; c++) {
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:863:13: note: Assuming the condition is true
+        if (*c == '#' && hash == NULL)
+            ^~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:863:13: note: Left side of '&&' is true
+yelp-3.28.1/libyelp/yelp-uri.c:863:9: note: Taking true branch
+        if (*c == '#' && hash == NULL)
+        ^
+yelp-3.28.1/libyelp/yelp-uri.c:862:21: note: Assuming the condition is false
+    for (c = colon; *c != '\0'; c++) {
+                    ^~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:862:5: note: Loop condition is false. Execution continues on line 871
+    for (c = colon; *c != '\0'; c++) {
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:871:9: note: Left side of '||' is false
+    if (slash || query || hash)
+        ^
+yelp-3.28.1/libyelp/yelp-uri.c:871:24: note: Left side of '||' is true
+    if (slash || query || hash)
+                       ^
+yelp-3.28.1/libyelp/yelp-uri.c:873:32: note: '?' condition is false
+                              (slash ? slash : (query ? query : hash)) - colon - 1);
+                               ^
+yelp-3.28.1/libyelp/yelp-uri.c:873:49: note: '?' condition is true
+                              (slash ? slash : (query ? query : hash)) - colon - 1);
+                                                ^
+yelp-3.28.1/libyelp/yelp-uri.c:877:15: note: Left side of '&&' is false
+    if (slash && (query || hash))
+              ^
+yelp-3.28.1/libyelp/yelp-uri.c:880:10: note: Taking false branch
+    else if (slash)
+         ^
+yelp-3.28.1/libyelp/yelp-uri.c:883:9: note: Assuming 'query' is null
+    if (query && hash)
+        ^~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:883:15: note: Left side of '&&' is false
+    if (query && hash)
+              ^
+yelp-3.28.1/libyelp/yelp-uri.c:886:14: note: Assuming 'query' is null
+    else if (query)
+             ^~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:886:10: note: Taking false branch
+    else if (query)
+         ^
+yelp-3.28.1/libyelp/yelp-uri.c:889:9: note: Assuming 'query' is null
+    if (query) {
+        ^~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:889:5: note: Taking false branch
+    if (query) {
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:907:9: note: Assuming 'hash' is null
+    if (hash)
+        ^~~~
+yelp-3.28.1/libyelp/yelp-uri.c:907:5: note: Taking false branch
+    if (hash)
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:910:22: note: '?' condition is false
+    priv->page_id = (slash ? slash : g_strdup ("index"));
+                     ^
+yelp-3.28.1/libyelp/yelp-uri.c:913:9: note: Assuming 'hash' is non-null
+    if (hash)
+        ^~~~
+yelp-3.28.1/libyelp/yelp-uri.c:913:5: note: Taking true branch
+    if (hash)
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:915:9: note: Assuming the condition is true
+    if (priv->frag_id && g_str_has_prefix (priv->frag_id, "search=")) {
+        ^~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:915:9: note: Left side of '&&' is true
+yelp-3.28.1/libyelp/yelp-uri.c:915:26: note: Assuming the condition is true
+    if (priv->frag_id && g_str_has_prefix (priv->frag_id, "search=")) {
+                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:915:5: note: Taking true branch
+    if (priv->frag_id && g_str_has_prefix (priv->frag_id, "search=")) {
+    ^
+yelp-3.28.1/libyelp/yelp-uri.c:916:9: note: Memory is released
+        g_free (priv->frag_id);
+        ^~~~~~~~~~~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:923:34: note: Assuming the condition is false
+                                 priv->page_id ? "/" : "",
+                                 ^~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:923:34: note: '?' condition is false
+yelp-3.28.1/libyelp/yelp-uri.c:924:34: note: '?' condition is false
+                                 priv->page_id ? priv->page_id : "",
+                                 ^
+yelp-3.28.1/libyelp/yelp-uri.c:925:34: note: Assuming 'query' is non-null
+                                 query ? "?" : "",
+                                 ^~~~~
+yelp-3.28.1/libyelp/yelp-uri.c:925:34: note: '?' condition is true
+yelp-3.28.1/libyelp/yelp-uri.c:926:34: note: '?' condition is true
+                                 query ? query : "",
+                                 ^
+yelp-3.28.1/libyelp/yelp-uri.c:927:34: note: '?' condition is false
+                                 priv->frag_id ? "#" : "",
+                                 ^
+yelp-3.28.1/libyelp/yelp-uri.c:928:34: note: '?' condition is false
+                                 priv->frag_id ? priv->frag_id : "",
+                                 ^
+yelp-3.28.1/libyelp/yelp-uri.c:931:5: note: Attempt to free released memory
+    g_free (query);
+    ^~~~~~~~~~~~~~
+  929|                                    NULL);
+  930|
+  931|->     g_free (query);
+  932|       g_free (document);
+  933|       return;
+---
+ libyelp/yelp-uri.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/libyelp/yelp-uri.c b/libyelp/yelp-uri.c
+index f20b167e..385cb837 100644
+--- a/libyelp/yelp-uri.c
++++ b/libyelp/yelp-uri.c
+@@ -928,7 +928,8 @@ resolve_help_uri (YelpUri *uri)
+                                  priv->frag_id ? priv->frag_id : "",
+                                  NULL);
+ 
+-    g_free (query);
++    if (query)
++        g_free (query);
+     g_free (document);
+     return;
+ }
+-- 
+2.19.1
+

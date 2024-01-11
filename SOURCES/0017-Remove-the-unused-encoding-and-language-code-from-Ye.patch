@@ -1,0 +1,147 @@
+From 2b2fde7b980985c45ddbd77c935ce43350006810 Mon Sep 17 00:00:00 2001
+From: Tomas Popela <tpopela@redhat.com>
+Date: Fri, 12 Oct 2018 12:53:43 +0200
+Subject: [PATCH 17/17] Remove the unused encoding and language code from
+ YelpManDocument
+
+Error: UNUSED_VALUE (CWE-563): [#def25]
+yelp-3.28.1/libyelp/yelp-man-document.c:422: value_overwrite: Overwriting previous write to "encoding" with value from "langmap[i].encoding".
+yelp-3.28.1/libyelp/yelp-man-document.c:416: assigned_pointer: Assigning value from ""ISO-8859-1"" to "encoding" here, but that stored value is overwritten before it can be used.
+  414|       encoding = g_getenv("MAN_ENCODING");
+  415|       if (encoding == NULL)
+  416|->  encoding = "ISO-8859-1";
+  417|
+  418|       if (language != NULL) {
+
+Error: CLANG_WARNING: [#def26]
+yelp-3.28.1/libyelp/yelp-man-document.c:416:2: warning: Value stored to 'encoding' is never read
+        encoding = "ISO-8859-1";
+        ^          ~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-man-document.c:416:2: note: Value stored to 'encoding' is never read
+        encoding = "ISO-8859-1";
+        ^          ~~~~~~~~~~~~
+  414|       encoding = g_getenv("MAN_ENCODING");
+  415|       if (encoding == NULL)
+  416|->  encoding = "ISO-8859-1";
+  417|
+  418|       if (language != NULL) {
+
+Error: CLANG_WARNING: [#def27]
+yelp-3.28.1/libyelp/yelp-man-document.c:422:3: warning: Value stored to 'encoding' is never read
+                encoding = langmap[i].encoding;
+                ^          ~~~~~~~~~~~~~~~~~~~
+yelp-3.28.1/libyelp/yelp-man-document.c:422:3: note: Value stored to 'encoding' is never read
+                encoding = langmap[i].encoding;
+                ^          ~~~~~~~~~~~~~~~~~~~
+  420|    for (i = 0; langmap[i].language != NULL; i++) {
+  421|        if (g_str_equal (language, langmap[i].language)) {
+  422|->   encoding = langmap[i].encoding;
+  423|     break;
+  424|        }
+---
+ libyelp/yelp-man-document.c | 75 -------------------------------------
+ 1 file changed, 75 deletions(-)
+
+diff --git a/libyelp/yelp-man-document.c b/libyelp/yelp-man-document.c
+index ad7fab4f..a18248ca 100644
+--- a/libyelp/yelp-man-document.c
++++ b/libyelp/yelp-man-document.c
+@@ -61,62 +61,6 @@ struct _YelpManDocumentPrivate {
+     guint          error;
+ };
+ 
+-typedef struct _YelpLangEncodings YelpLangEncodings;
+-struct _YelpLangEncodings {
+-    const gchar *language;
+-    const gchar *encoding;
+-};
+-/* http://www.w3.org/International/O-charset-lang.html */
+-static const YelpLangEncodings langmap[] = {
+-    { "C",     "ISO-8859-1" },
+-    { "af",    "ISO-8859-1" },
+-    { "ar",    "ISO-8859-6" },
+-    { "bg",    "ISO-8859-5" },
+-    { "be",    "ISO-8859-5" },
+-    { "ca",    "ISO-8859-1" },
+-    { "cs",    "ISO-8859-2" },
+-    { "da",    "ISO-8859-1" },
+-    { "de",    "ISO-8859-1" },
+-    { "el",    "ISO-8859-7" },
+-    { "en",    "ISO-8859-1" },
+-    { "eo",    "ISO-8859-3" },
+-    { "es",    "ISO-8859-1" },
+-    { "et",    "ISO-8859-15" },
+-    { "eu",    "ISO-8859-1" },
+-    { "fi",    "ISO-8859-1" },
+-    { "fo",    "ISO-8859-1" },
+-    { "fr",    "ISO-8859-1" },
+-    { "ga",    "ISO-8859-1" },
+-    { "gd",    "ISO-8859-1" },
+-    { "gl",    "ISO-8859-1" },
+-    { "hu",    "ISO-8859-2" },
+-    { "id",    "ISO-8859-1" }, /* is this right */
+-    { "mt",    "ISO-8859-3" },
+-    { "is",    "ISO-8859-1" },
+-    { "it",    "ISO-8859-1" },
+-    { "iw",    "ISO-8859-8" },
+-    { "ja",    "EUC-JP" },
+-    { "ko",    "EUC-KR" },
+-    { "lt",    "ISO-8859-13" },
+-    { "lv",    "ISO-8859-13" },
+-    { "mk",    "ISO-8859-5" },
+-    { "mt",    "ISO-8859-3" },
+-    { "no",    "ISO-8859-1" },
+-    { "pl",    "ISO-8859-2" },
+-    { "pt_BR", "ISO-8859-1" },
+-    { "ro",    "ISO-8859-2" },
+-    { "ru",    "KOI8-R" },
+-    { "sl",    "ISO-8859-2" },
+-    { "sr",    "ISO-8859-2" }, /* Latin, not cyrillic */
+-    { "sk",    "ISO-8859-2" },
+-    { "sv",    "ISO-8859-1" },
+-    { "tr",    "ISO-8859-9" },
+-    { "uk",    "ISO-8859-5" },
+-    { "zh_CN", "BIG5" },
+-    { "zh_TW", "BIG5" },
+-    { NULL,    NULL },
+-};
+-
+ static void           yelp_man_document_finalize         (GObject                *object);
+ 
+ /* YelpDocument */
+@@ -385,7 +329,6 @@ man_document_process (YelpManDocument *man)
+     gint  params_i = 0;
+     gchar **params = NULL;
+     YelpManParser *parser;
+-    const gchar *language, *encoding;
+ 
+     file = yelp_uri_get_file (yelp_document_get_uri ((YelpDocument *) man));
+     if (file == NULL) {
+@@ -407,24 +350,6 @@ man_document_process (YelpManDocument *man)
+         goto done;
+     }
+ 
+-    /* FIXME: get the language */
+-    language = "C";
+-
+-    /* default encoding if the language doesn't match below */
+-    encoding = g_getenv("MAN_ENCODING");
+-    if (encoding == NULL)
+-	encoding = "ISO-8859-1";
+-
+-    if (language != NULL) {
+-        gint i;
+-	for (i = 0; langmap[i].language != NULL; i++) {
+-	    if (g_str_equal (language, langmap[i].language)) {
+-		encoding = langmap[i].encoding;
+-		break;
+-	    }
+-	}
+-    }
+-
+     parser = yelp_man_parser_new ();
+     priv->xmldoc = yelp_man_parser_parse_file (parser, filepath, &error);
+     yelp_man_parser_free (parser);
+-- 
+2.19.1
+

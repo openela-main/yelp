@@ -1,0 +1,185 @@
+From b8fdfcae060bdffb15d81e68cdff011105013eb0 Mon Sep 17 00:00:00 2001
+From: Michael Catanzaro <mcatanzaro@igalia.com>
+Date: Fri, 18 May 2018 09:56:16 -0500
+Subject: [PATCH] Fix build with GCC 8
+
+Yelp enables -Werror by default, so it's responsible for predicting and
+fixing future compiler warnings that only an oracle could know about. In
+this case, that turned out to be -Werror=cast-function-type.
+---
+ libyelp/yelp-docbook-document.c | 6 +++---
+ libyelp/yelp-document.c         | 4 ++--
+ libyelp/yelp-help-list.c        | 2 +-
+ libyelp/yelp-info-document.c    | 2 +-
+ libyelp/yelp-mallard-document.c | 6 +++---
+ libyelp/yelp-man-document.c     | 2 +-
+ libyelp/yelp-simple-document.c  | 2 +-
+ libyelp/yelp-transform.c        | 2 +-
+ libyelp/yelp-uri.c              | 2 +-
+ 9 files changed, 14 insertions(+), 14 deletions(-)
+
+diff --git a/libyelp/yelp-docbook-document.c b/libyelp/yelp-docbook-document.c
+index 9b430b09..6ecaf316 100644
+--- a/libyelp/yelp-docbook-document.c
++++ b/libyelp/yelp-docbook-document.c
+@@ -273,7 +273,7 @@ docbook_request_page (YelpDocument         *document,
+         priv->process_running = TRUE;
+         g_object_ref (document);
+         priv->thread = g_thread_new ("docbook-page",
+-                                     (GThreadFunc) docbook_process,
++                                     (GThreadFunc)(GCallback) docbook_process,
+                                      document);
+         break;
+     case DOCBOOK_STATE_PARSING:
+@@ -495,7 +495,7 @@ docbook_reload (YelpDocbookDocument *docbook)
+     priv->process_running = TRUE;
+     g_object_ref (docbook);
+     priv->thread = g_thread_new ("docbook-reload",
+-                                 (GThreadFunc) docbook_process,
++                                 (GThreadFunc)(GCallback) docbook_process,
+                                  docbook);
+ 
+     g_mutex_unlock (&priv->mutex);
+@@ -1077,7 +1077,7 @@ docbook_index (YelpDocument *document)
+     priv = GET_PRIV (document);
+     g_object_ref (document);
+     priv->index = g_thread_new ("docbook-index",
+-                                (GThreadFunc) docbook_index_threaded,
++                                (GThreadFunc)(GCallback) docbook_index_threaded,
+                                 document);
+     priv->index_running = TRUE;
+ }
+diff --git a/libyelp/yelp-document.c b/libyelp/yelp-document.c
+index 6adbbb1d..c1eec9cc 100644
+--- a/libyelp/yelp-document.c
++++ b/libyelp/yelp-document.c
+@@ -330,7 +330,7 @@ yelp_document_dispose (GObject *object)
+ 
+     if (document->priv->reqs_all) {
+ 	g_slist_foreach (document->priv->reqs_all,
+-			 (GFunc) request_try_free,
++			 (GFunc)(GCallback) request_try_free,
+ 			 NULL);
+ 	g_slist_free (document->priv->reqs_all);
+ 	document->priv->reqs_all = NULL;
+@@ -338,7 +338,7 @@ yelp_document_dispose (GObject *object)
+ 
+     if (document->priv->reqs_search) {
+ 	g_slist_foreach (document->priv->reqs_search,
+-			 (GFunc) request_try_free,
++			 (GFunc)(GCallback) request_try_free,
+ 			 NULL);
+ 	g_slist_free (document->priv->reqs_search);
+ 	document->priv->reqs_search = NULL;
+diff --git a/libyelp/yelp-help-list.c b/libyelp/yelp-help-list.c
+index 9005e48f..cbac98bf 100644
+--- a/libyelp/yelp-help-list.c
++++ b/libyelp/yelp-help-list.c
+@@ -210,7 +210,7 @@ help_list_request_page (YelpDocument          *document,
+         priv->process_running = TRUE;
+         g_object_ref (document);
+         priv->thread = g_thread_new ("helplist-page",
+-                                     (GThreadFunc) help_list_think,
++                                     (GThreadFunc)(GCallback) help_list_think,
+                                      document);
+     }
+     priv->pending = g_slist_prepend (priv->pending, g_strdup (page_id));
+diff --git a/libyelp/yelp-info-document.c b/libyelp/yelp-info-document.c
+index 7b532744..d55be325 100644
+--- a/libyelp/yelp-info-document.c
++++ b/libyelp/yelp-info-document.c
+@@ -209,7 +209,7 @@ info_request_page (YelpDocument         *document,
+ 	priv->process_running = TRUE;
+         g_object_ref (document);
+ 	priv->thread = g_thread_new ("info-page",
+-                                     (GThreadFunc) info_document_process,
++                                     (GThreadFunc)(GCallback) info_document_process,
+                                      document);
+ 	break;
+     case INFO_STATE_PARSING:
+diff --git a/libyelp/yelp-mallard-document.c b/libyelp/yelp-mallard-document.c
+index fc7c4d7c..74fc80ee 100644
+--- a/libyelp/yelp-mallard-document.c
++++ b/libyelp/yelp-mallard-document.c
+@@ -287,7 +287,7 @@ mallard_request_page (YelpDocument         *document,
+         priv->thread_running = TRUE;
+         g_object_ref (document);
+         priv->thread = g_thread_new ("mallard-page",
+-                                     (GThreadFunc) mallard_think,
++                                     (GThreadFunc)(GCallback) mallard_think,
+                                      document);
+     }
+ 
+@@ -1100,7 +1100,7 @@ mallard_index (YelpDocument *document)
+     priv = GET_PRIV (document);
+     g_object_ref (document);
+     priv->index = g_thread_new ("mallard-index",
+-                                (GThreadFunc) mallard_index_threaded,
++                                (GThreadFunc)(GCallback) mallard_index_threaded,
+                                 document);
+     priv->index_running = TRUE;
+ }
+@@ -1148,7 +1148,7 @@ mallard_monitor_changed (GFileMonitor         *monitor,
+     priv->thread_running = TRUE;
+     g_object_ref (mallard);
+     priv->thread = g_thread_new ("mallard-reload",
+-                                 (GThreadFunc) mallard_think,
++                                 (GThreadFunc)(GCallback) mallard_think,
+                                  mallard);
+ 
+     g_mutex_unlock (&priv->mutex);
+diff --git a/libyelp/yelp-man-document.c b/libyelp/yelp-man-document.c
+index 4e165d57..ad7fab4f 100644
+--- a/libyelp/yelp-man-document.c
++++ b/libyelp/yelp-man-document.c
+@@ -243,7 +243,7 @@ man_request_page (YelpDocument         *document,
+         yelp_document_set_page_id (document, priv->page_id, priv->page_id);
+         yelp_document_set_root_id (document, priv->page_id, priv->page_id);
+ 	priv->thread = g_thread_new ("man-page",
+-                                     (GThreadFunc) man_document_process,
++                                     (GThreadFunc)(GCallback) man_document_process,
+                                      document);
+ 	break;
+     case MAN_STATE_PARSING:
+diff --git a/libyelp/yelp-simple-document.c b/libyelp/yelp-simple-document.c
+index 501d7881..595efa83 100644
+--- a/libyelp/yelp-simple-document.c
++++ b/libyelp/yelp-simple-document.c
+@@ -131,7 +131,7 @@ yelp_simple_document_dispose (GObject *object)
+     YelpSimpleDocument *document = YELP_SIMPLE_DOCUMENT (object);
+ 
+     if (document->priv->reqs) {
+-	g_slist_foreach (document->priv->reqs, (GFunc) request_try_free, NULL);
++	g_slist_foreach (document->priv->reqs, (GFunc)(GCallback) request_try_free, NULL);
+ 	g_slist_free (document->priv->reqs);
+ 	document->priv->reqs = NULL;
+     }
+diff --git a/libyelp/yelp-transform.c b/libyelp/yelp-transform.c
+index 334438af..7a5dc86e 100644
+--- a/libyelp/yelp-transform.c
++++ b/libyelp/yelp-transform.c
+@@ -298,7 +298,7 @@ yelp_transform_start (YelpTransform       *transform,
+     priv->running = TRUE;
+     g_object_ref (transform);
+     priv->thread = g_thread_new ("transform-run",
+-                                 (GThreadFunc) transform_run,
++                                 (GThreadFunc)(GCallback) transform_run,
+                                  transform);
+     g_mutex_unlock (&priv->mutex);
+ 
+diff --git a/libyelp/yelp-uri.c b/libyelp/yelp-uri.c
+index 317beead..f20b167e 100644
+--- a/libyelp/yelp-uri.c
++++ b/libyelp/yelp-uri.c
+@@ -298,7 +298,7 @@ resolve_start (YelpUri *uri)
+     if (priv->resolver == NULL) {
+         g_object_ref (uri);
+         priv->resolver = g_thread_new ("uri-resolve",
+-                                       (GThreadFunc) resolve_async,
++                                       (GThreadFunc)(GCallback) resolve_async,
+                                        uri);
+     }
+ }
+-- 
+2.17.1
+
