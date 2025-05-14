@@ -3,7 +3,7 @@
 Name:          yelp
 Epoch:         2
 Version:       3.28.1
-Release:       3%{?dist}
+Release:       3%{?dist}.1
 Summary:       Help browser for the GNOME desktop
 
 Group:         Applications/System
@@ -35,6 +35,8 @@ Patch18:       0016-Fix-possible-double-free.patch
 Patch19:       0017-Remove-the-unused-encoding-and-language-code-from-Ye.patch
 # https://bugzilla.redhat.com/show_bug.cgi?id=1638876
 Patch20:       yelp-quit.patch
+# https://issues.redhat.com/browse/RHEL-85922
+Patch21:       yelp-CVE-2025-3155.patch
 
 BuildRequires: pkgconfig(gtk+-3.0)
 BuildRequires: pkgconfig(liblzma)
@@ -124,6 +126,9 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/yelp.desktop
 
 
 %changelog
+* Wed Apr 23 2025 David King <dking@redhat.com> - 2:3.28.1-3.1
+- Fix CVE-2025-3155 (RHEL-85922)
+
 * Mon Oct 15 2018 Tomas Popela <tpopela@redhat.com> - 2:3.28.1-3
 - Add the Quit entry to the app menu
 - Handle Ctrl+Q shortcut for quitting the application
