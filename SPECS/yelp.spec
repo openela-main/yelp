@@ -3,7 +3,7 @@
 Name:          yelp
 Epoch:         2
 Version:       3.28.1
-Release:       3%{?dist}.1
+Release:       3%{?dist}.2
 Summary:       Help browser for the GNOME desktop
 
 Group:         Applications/System
@@ -37,6 +37,9 @@ Patch19:       0017-Remove-the-unused-encoding-and-language-code-from-Ye.patch
 Patch20:       yelp-quit.patch
 # https://issues.redhat.com/browse/RHEL-85922
 Patch21:       yelp-CVE-2025-3155.patch
+# https://redhat.atlassian.net/browse/RHEL-190226
+# https://gitlab.gnome.org/GNOME/yelp/-/work_items/238
+Patch22:       yelp-3.28.1-fix-CVE-2026-13601.patch
 
 BuildRequires: pkgconfig(gtk+-3.0)
 BuildRequires: pkgconfig(liblzma)
@@ -126,6 +129,9 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/yelp.desktop
 
 
 %changelog
+* Tue Jul 07 2026 David King <dking@redhat.com> - 2:3.28.1-3.2
+- Fix CVE-2026-13601 (RHEL-190226)
+
 * Wed Apr 23 2025 David King <dking@redhat.com> - 2:3.28.1-3.1
 - Fix CVE-2025-3155 (RHEL-85922)
 
