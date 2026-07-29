@@ -3,7 +3,7 @@
 Name:          yelp
 Epoch:         2
 Version:       40.3
-Release:       3%{?dist}
+Release:       3%{?dist}.1
 Summary:       Help browser for the GNOME desktop
 
 License:       LGPLv2+ and ASL 2.0 and GPLv2+
@@ -14,6 +14,9 @@ Source:        https://download.gnome.org/sources/%{name}/40/%{name}-%{tarball_v
 Patch1:        0001-Center-new-windows.patch
 # https://issues.redhat.com/browse/RHEL-85927
 Patch2:        yelp-CVE-2025-3155.patch
+# https://redhat.atlassian.net/browse/RHEL-190224
+# https://gitlab.gnome.org/GNOME/yelp/-/work_items/238
+Patch3:        yelp-40.3-fix-CVE-2026-13601.patch
 
 BuildRequires: gcc
 BuildRequires: make
@@ -95,6 +98,9 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/yelp.desktop
 
 
 %changelog
+* Tue Jul 07 2026 David King <dking@redhat.com> - 2:40.3-3.1
+- Fix CVE-2026-13601 (RHEL-190224)
+
 * Wed Apr 23 2025 David King <dking@redhat.com> - 2:40.3-3
 - Fix CVE-2025-3155 (RHEL-85927)
 
